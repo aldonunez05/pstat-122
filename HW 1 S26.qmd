@@ -145,10 +145,41 @@ d) Construct a boxplot and comment on the distribution.
 
 `r bfcolor("ANSWERS TO QUESTION 3:", "red")` \
 
-_**Replace this line with your answers**_ \
+(a)
+```{r}
+steps <- c(6.5, 7.8, 8.2, 5.9, 9.1, 10.3, 7.2, 8.7, 6.8, 9.5, 7.9, 8.4, 6.1, 10.0, 9.8, 7.5, 8.9, 6.7, 7.3, 9.2, 8.0, 7.6, 6.9, 9.7, 8.5)
 
+print(paste("sample mean:", mean(steps)))
+print(paste("median:", median(steps)))
+print(paste("IQR:", IQR(steps)))
+print(paste("sample standard deviation:", sd(steps)))
+```
+(b)
+```{r}
+lower_range <- mean(steps) - 2*sd(steps)
+upper_range <- mean(steps) + 2*sd(steps)
 
+ctr <- 0
+for(i in 1:length(steps)){
+  if(steps[i] >= lower_range && steps[i] <= upper_range){
+    ctr <- ctr + 1
+  }
+}
 
+percentage <- (ctr / length(steps)) * 100
+cat("Percentge is:", percentage)
+```
+
+(c)
+```{r}
+z <- (5.9 - mean(steps)) / sd(steps)
+cat("Z-score for 5.9:", z)
+```
+(d)
+```{r}
+boxplot(steps, main="Boxplot of steps", ylab="Values", col = "lightblue")
+```
+The data seems to be very compact 
 \newpage
 :::{.callout-important}
 ## Question 4 
