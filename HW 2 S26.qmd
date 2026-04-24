@@ -1,0 +1,505 @@
+---
+title: 'Homework 2'
+subtitle: "PSTAT 122: Design and Analysis of Experiments" 
+
+author: "Instructor: Ali Abuzaid"
+format: 
+ pdf:
+    code-fold: true
+    code-line-numbers: true
+    code-copy: true
+    code-tools: true
+    self-contained: true
+    toc: false
+    toc-location: left
+    number-sections: true
+    geometry: margin=0.7in 
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message =  FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+knitr::opts_chunk$set(error =  FALSE)
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+
+:::callout
+<div style="text-align: center">
+<span style="color: blue;"> **STUDENT NAME **</span>  
+</div>
+- Aldo Nunez (A399512)
+
+
+:::
+
+:::{.callout-tip}
+# Instructions
+
+* This homework aims to familiarize you with real-life data.
+
+* Please write your **full name** and **perm number** legibly on the front page of your homework sheet.
+
+* This homework must be completed and submitted **individually**. Collaboration is allowed for discussion, but each student must submit their own work.
+
+* Solve all homework problems. You may use `R` for your calculations and analysis, but you must include all `R` code used.  
+
+* Your reasoning must be clear and complete. To receive full credit, provide sufficient explanations alongside any code and results.
+
+* Ensure that all `R` code, mathematical formulas, and workings are presented clearly and appropriately.
+
+* All figures should be numbered, and axes must be labeled. 
+
+* Please use the provided `HW 2 S26.qmd` file to type your solutions and submit the completed assignment as a PDF file. You can utilize `RStudio` for this purpose. For guidance, refer to the [Tutorial: Hello, Quarto](https://quarto.org/docs/get-started/hello/rstudio.html)).
+
+* Submit your solution via **Gradescope** as **a single PDF file**.
+
+
+:::
+
+:::{.callout-caution}
+# Due Date
+**Due Date:** April 24, 2026, 11:59 PM
+:::
+
+
+
+\newpage
+
+`r bfcolor("ANSWER ALL THE FOLLOWING QUESTIONS:", "blue")` \
+
+:::{.callout-important}
+## Question 1 **(6 Points)** 
+
+
+The daily waiting time (in minutes) at a customer service center was recorded for 20 randomly selected customers:
+
+$$12,18,15,20,17,14,22,16,19,13$$
+
+$$21,11,23,18,17,16,20,15,19,14$$
+
+Can the waiting times be adequately modeled by a normal distribution?
+
+Use a combination of at least three graphical and numerical methods to justify your answer.
+:::
+
+
+`r bfcolor("ANSWERS TO QUESTION 1:", "red")` \
+
+```{r}
+x <- c(12,18,15,20,17,14,22,16,19,13,21,11,23,18,17,16,20,15,19,14)
+
+#histograph
+hist(x, main="Histogram of Waiting Times", xlab="Minutes", col="lightblue", freq=FALSE)
+curve(dnorm(x, mean(x), sd(x)), add=TRUE, col="red")
+
+#q-q plot
+qqnorm(x, main="Normal Q-Q Plot")
+qqline(x, col="red")
+
+#shapiro-wilk test
+shapiro.test(x)
+```
+
+
+The distribution looks bell shaped and centered around 17 minutes on the histograph, The points fall along the reference line in the Q-Q plot, suggesting normality, and since p > 0.05 in the Shapiro-Wilk test, we fail to reject $H_0$ of normality. Therefore, since there is no evidence against normality, The waiting times can be modeled by a normal distribution.
+
+\newpage
+:::{.callout-important}
+## Question 2 **(2+2=4 Points)**  
+For the data in Question 1 (waiting times in minutes), test the hypothesis that the population standard deviation is 4 minutes. Clearly state your assumptions. Report the conclusions at the 0.05 level of significance.
+:::
+
+`r bfcolor("ANSWERS TO QUESTION 2:", "red")` \
+
+Hypotheses: $H_0: \sigma = 4$ vs $H_A: \sigma \neq 4$
+
+Test-Statistic: $$\chi^2 = \frac{(n-1)s^2}{\sigma_0^2} \sim \chi^2_{n-1}$$
+
+```{r}
+n <- 20
+s2 <- var(x)
+sigma0_sq = 16
+
+chi2_stat = (n-1) * s2 / sigma0_sq
+chi2_stat
+
+qchisq(c(0.025, 0.975), df = n-1)
+
+p_val <- 2 * min(pchisq(chi2_stat, df=n-1), 1 - pchisq(chi2_stat, df=n-1))
+p_val
+```
+
+Since 13.125 falls inside the critical region, we fail to reject $H_0$. Therefore, at $\alpha$ = 0.05, there is insufficient evidence to conclude that $\sigma \neq 4$ minutes
+\newpage
+
+:::{.callout-important}
+## Question 3 **(2+2+2=6 Points)**  
+ Two computers often are compared by running a collection of various “benchmark” programs and recording the difference in CPU time required to complete the same program. Six benchmark programs, run on two computers, produced the following table of CPU times (in minutes).
+
+\centering
+\begin{tabular}{c|cccccc}
+\hline
+ & \multicolumn{6}{c}{Benchmark Program} \\ \cline{2-7}
+Computer & 1 & 2 & 3 & 4 & 5 & 6 \\
+\hline
+1 & 1.12 & 1.73 & 1.04 & 1.86 & 1.47 & 2.10 \\
+2 & 1.15 & 1.72 & 1.10 & 1.87 & 1.46 & 2.15 \\
+\hline
+\end{tabular}
+
+\begin{enumerate}
+\item Do the data provide sufficient evidence to indicate a difference in mean CPU times required for the two computers to complete a job? Test using $\alpha$ = .05.
+\item Give bounds for the associated p-value.
+
+\item Find a 95\% confidence interval for the difference in mean CPU time required for the two computers to complete a job.
+
+\end{enumerate}
+:::
+
+
+`r bfcolor("ANSWERS TO QUESTION 3:", "red")` \
+
+```{r}
+comp1 <- c(1.12, 1.73, 1.04, 1.86, 1.47, 2.10)
+comp2 <- c(1.15, 1.72, 1.10, 1.87, 1.46, 2.15)
+d <- comp1 - comp2  # differences
+
+t.test(comp1, comp2, paired=TRUE)
+```
+
+
+1) Hypothesis: $H_0: \mu_D = 0$ vs $\mu_d \neq 0$
+
+critical value: $t_{0.025, 5} = 2.571$
+
+since |-1.7727| < 2.571, we fail to reject $H_0$ at $\alpha$ = 0.05, there is insufficient evidence to conclude that there is a significant difference in mean CPU times between the two computers
+
+2) 0.10 < p-value < 0.20
+
+3) (-0.053091380  0.009758046)
+
+\newpage
+:::{.callout-important}
+## Question 4 **(2+3+2=7 Points)** 
+   Consider testing equality of two normal populations, where the variances are unknown but assumed to be equal.
+
+(a) Describe the t-test that you would use in this situation.  
+
+(b) Show that the t-statistic is square root of the F-statistic that would be obtained if, instead, you conducted a one factor ANOVA.  
+
+(c) Are the two procedures equivalent? Justify your answer.
+:::
+`r bfcolor("ANSWERS TO QUESTION 4:", "red")` \
+
+
+**(a) Pooled Two-Sample t-Test**
+
+Given two independent normal populations with equal unknown variances $\sigma^2$, we test:
+$$H_0: \mu_1 = \mu_2 \quad \text{vs} \quad H_1: \mu_1 \neq \mu_2$$
+
+The pooled variance estimator is:
+$$S_p^2 = \frac{(n_1-1)S_1^2 + (n_2-1)S_2^2}{n_1+n_2-2}$$
+
+and the test statistic is:
+$$t = \frac{\bar{y}_1 - \bar{y}_2}{S_p\sqrt{\dfrac{1}{n_1}+\dfrac{1}{n_2}}} \sim t_{n_1+n_2-2} \quad \text{under } H_0$$
+
+We reject $H_0$ at level $\alpha$ if $|t| > t_{\alpha/2,\, n_1+n_2-2}$.
+
+**(b) Show that $t^2 = F$**
+
+In a one-factor ANOVA with $a = 2$ treatments, the treatment sum of squares (with $a - 1 = 1$ degree of freedom) is:
+$$SS_{\text{Treatments}} = \frac{n_1 n_2}{n_1+n_2}(\bar{y}_1 - \bar{y}_2)^2$$
+
+so $MS_{\text{Treatments}} = SS_{\text{Treatments}}$. The error mean square is:
+$$MS_{\text{Error}} = \frac{(n_1-1)S_1^2 + (n_2-1)S_2^2}{n_1+n_2-2} = S_p^2$$
+
+Therefore the F-statistic is:
+$$F = \frac{MS_{\text{Treatments}}}{MS_{\text{Error}}} 
+= \frac{\dfrac{n_1 n_2}{n_1+n_2}(\bar{y}_1-\bar{y}_2)^2}{S_p^2}
+= \frac{(\bar{y}_1-\bar{y}_2)^2}{S_p^2\!\left(\dfrac{1}{n_1}+\dfrac{1}{n_2}\right)}
+= t^2 \qquad \blacksquare$$
+
+**(c) Equivalence of the Two Procedures**
+
+Yes, the two procedures are **fully equivalent** when $a = 2$. This follows directly from the identity $F_{1,\,\nu} = t_\nu^2$: squaring the t-statistic gives the F-statistic, and both tests yield identical p-values and conclusions for any two-sided alternative. The only notational difference is that the F-test is inherently two-sided, while the t-test can also be used one-sided.
+
+
+
+\newpage
+:::{.callout-important}
+## Question 5 **(2+2+2+1+1+1=9 Points)** 
+
+
+The compressive strength of a new concrete composite is being investigated. Four different curing methods are available and all are feasible in practice. A completely randomized design was used, and the following data were obtained.
+
+| Curing Method | Strength 1 | Strength 2 | Strength 3 | Strength 4 |
+|---------------|------------|------------|------------|------------|
+| 1 | 42.5 | 40.8 | 39.6 | 41.2 |
+| 2 | 45.1 | 46.3 | 44.0 | 45.7 |
+| 3 | 38.9 | 40.1 | 41.5 | 42.0 |
+| 4 | 36.2 | 37.4 | 35.8 | 38.0 |
+
+
+(a) Test the hypothesis that the curing method has an effect on the compressive strength of the concrete. Use a significance level of $\alpha = 0.05.$
+
+(b) Construct a normal probability plot of the residuals. What conclusion can be drawn regarding the normality assumption? Confirm your conclusion using an appropriate numerical test.
+
+(c) Plot the residuals versus the fitted values. What conclusion can be drawn about the constant variance assumption? Confirm your conclusion using a numerical test.
+
+(d) Use Fisher’s Least Significant Difference (LSD) method to compare all pairs of treatment means.
+
+(e) Use the Bonferroni method to compare all pairs of treatment means.
+
+(f) Do the two multiple-comparison methods lead to different conclusions? If so, explain why this difference occurs.
+
+
+:::
+`r bfcolor("ANSWERS TO QUESTION 5:", "red")` \
+
+```{r}
+# Data setup
+strength <- c(42.5, 40.8, 39.6, 41.2,
+              45.1, 46.3, 44.0, 45.7,
+              38.9, 40.1, 41.5, 42.0,
+              36.2, 37.4, 35.8, 38.0)
+method <- factor(rep(1:4, each = 4))
+
+model <- aov(strength ~ method)
+```
+
+**(a) Test for Effect of Curing Method**
+
+We test:
+$$H_0: \mu_1 = \mu_2 = \mu_3 = \mu_4 \quad \text{vs} \quad H_1: \text{at least one mean differs}$$
+
+```{r}
+summary(model)
+```
+
+Since the p-value is less than $\alpha = 0.05$, we **reject $H_0$** and conclude that curing method has a significant effect on compressive strength.
+
+**(b) Normality of Residuals**
+
+```{r}
+#| fig-cap: "Normal Q-Q Plot of Residuals"
+#| label: fig-qq
+
+qqnorm(residuals(model), main = "Normal Q-Q Plot of Residuals")
+qqline(residuals(model), col = "red")
+```
+
+```{r}
+shapiro.test(residuals(model))
+```
+
+The points on the Q-Q plot fall approximately along the reference line. The Shapiro-Wilk test yields a p-value greater than 0.05, so we **fail to reject** normality. The normality assumption is satisfied.
+
+**(c) Constant Variance Assumption**
+
+```{r}
+#| fig-cap: "Residuals vs Fitted Values"
+#| label: fig-resfit
+
+plot(fitted(model), residuals(model),
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs Fitted Values")
+abline(h = 0, col = "red", lty = 2)
+```
+
+```{r}
+# Bartlett's test for equal variances (base R)
+bartlett.test(strength ~ method)
+```
+
+The residual plot shows no systematic pattern or funnel shape. Bartlett's test yields a p-value greater than 0.05, so we **fail to reject** the null hypothesis of equal variances. The constant variance assumption is satisfied.
+
+**(d) Fisher's LSD Method**
+
+```{r}
+# Extract ANOVA values
+anova_table <- summary(model)[[1]]
+MSE        <- anova_table["Residuals", "Mean Sq"]
+df_error   <- anova_table["Residuals", "Df"]
+n_per_group <- 4
+a           <- 4
+
+# Group means
+group_means <- tapply(strength, method, mean)
+
+# LSD value
+LSD <- qt(0.025, df = df_error, lower.tail = FALSE) * sqrt(2 * MSE / n_per_group)
+cat("LSD =", round(LSD, 4), "\n\n")
+
+# All pairwise comparisons
+pairs <- combn(levels(method), 2)
+cat("Pairwise mean differences vs LSD:\n")
+for (k in 1:ncol(pairs)) {
+  i <- pairs[1, k]; j <- pairs[2, k]
+  diff <- abs(group_means[i] - group_means[j])
+  sig  <- ifelse(diff > LSD, "Significant", "Not significant")
+  cat(sprintf("  Method %s vs Method %s: |diff| = %.4f  --> %s\n", i, j, diff, sig))
+}
+```
+
+The LSD is:
+$$\text{LSD} = t_{\alpha/2,\, N-a} \cdot \sqrt{\frac{2\, MS_E}{n}}$$
+
+Pairs whose absolute mean difference exceeds the LSD are declared significantly different.
+
+**(e) Bonferroni Method**
+
+```{r}
+# Bonferroni-adjusted pairwise t-tests (base R)
+pairwise.t.test(strength, method, p.adjust.method = "bonferroni")
+```
+
+With $\binom{4}{2} = 6$ pairwise comparisons, the Bonferroni procedure adjusts p-values by multiplying by the number of comparisons. Pairs with adjusted p-value $< 0.05$ are declared significantly different.
+
+**(f) Comparison of Methods**
+
+Both the Fisher LSD and Bonferroni methods lead to the **same conclusions** here. In general, the Bonferroni method is more conservative than Fisher's LSD because it controls the familywise error rate across all comparisons simultaneously, whereas Fisher's LSD only controls the per-comparison error rate. When treatment effects are large and well-separated (as in this dataset), both methods tend to agree.
+
+\newpage
+:::{.callout-important}
+## Question 6 **(2+2+2=6 Points)** 
+ A single factor completely randomized design has six levels of the factor. There are five replicates at each level and the total sum of squares is 900.25. The treatment sum of squares is 750.5. 
+
+(a) What is the estimate of the error variance?
+
+(b) What proportion of variability is explained by the treatment effect?
+
+(c) What is the F-statistic and corresponding p-value?
+:::
+
+
+`r bfcolor("ANSWERS TO QUESTION 6:", "red")` \
+
+iven information:
+
+- Number of factor levels: $a = 6$
+- Number of replicates per level: $n = 5$
+- Total observations: $N = an = 30$
+- Total sum of squares: $SS_T = 900.25$
+- Treatment sum of squares: $SS_{\text{Treatments}} = 750.5$
+
+The error sum of squares is:
+$$SS_E = SS_T - SS_{\text{Treatments}} = 900.25 - 750.5 = 149.75$$
+
+**(a) Estimate of Error Variance**
+
+$$\hat{\sigma}^2 = MS_E = \frac{SS_E}{N - a} = \frac{149.75}{30 - 6} = \frac{149.75}{24} \approx 6.24$$
+
+**(b) Proportion of Variability Explained**
+
+$$R^2 = \frac{SS_{\text{Treatments}}}{SS_T} = \frac{750.5}{900.25} \approx 0.8337$$
+
+The treatment effect explains approximately **83.4%** of the total variability in the response.
+
+**(c) F-Statistic and P-Value**
+
+$$MS_{\text{Treatments}} = \frac{SS_{\text{Treatments}}}{a - 1} = \frac{750.5}{5} = 150.1$$
+
+$$F = \frac{MS_{\text{Treatments}}}{MS_E} = \frac{150.1}{6.24} \approx 24.06$$
+
+```{r}
+pf(24.06, df1 = 5, df2 = 24, lower.tail = FALSE)
+```
+
+The p-value is essentially 0 ($p < 0.0001$). We **reject $H_0$** and conclude that the treatment means are not all equal.
+
+
+\newpage
+:::{.callout-important}
+## Question 7 **(5 Points)** 
+Suppose that we do an experiment on three types of fertilizer on $n_1 + n_2 + n_3$ experimental agricultural plots. We have crop yields of $y_{11}, y_{12}, \ldots, y_{1n_1}$ for each of the treatment groups. Show that the sum of squares total is:
+$$
+SS_{\text{Total}} = SS_{\text{Error}} + n_1 (\bar{y}_1 - \bar{y}..)^{2} + n_2 (\bar{y}_2 - \bar{y}..)^{2} + n_3 (\bar{y}_3 - \bar{y}..)^{2}
+$$
+:::
+
+
+`r bfcolor("ANSWERS TO QUESTION 7:", "red")` \
+
+We wish to show:
+$$SS_{\text{Total}} = SS_{\text{Error}} + \sum_{i=1}^{3} n_i(\bar{y}_{i.} - \bar{y}_{..})^2$$
+
+**Proof.** Begin with the algebraic identity obtained by adding and subtracting the group mean $\bar{y}_{i.}$:
+$$y_{ij} - \bar{y}_{..} = (y_{ij} - \bar{y}_{i.}) + (\bar{y}_{i.} - \bar{y}_{..})$$
+
+Squaring both sides and summing over all $i = 1, 2, 3$ and $j = 1, \ldots, n_i$:
+$$\sum_{i=1}^{3}\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{..})^2 = \sum_{i=1}^{3}\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{i.})^2 + \sum_{i=1}^{3}\sum_{j=1}^{n_i}(\bar{y}_{i.} - \bar{y}_{..})^2 + 2\sum_{i=1}^{3}\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{i.})(\bar{y}_{i.} - \bar{y}_{..})$$
+
+**The cross-product term vanishes.** For each fixed $i$, the factor $(\bar{y}_{i.} - \bar{y}_{..})$ does not depend on $j$, so:
+$$\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{i.})(\bar{y}_{i.} - \bar{y}_{..}) = (\bar{y}_{i.} - \bar{y}_{..})\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{i.}) = (\bar{y}_{i.} - \bar{y}_{..}) \cdot 0 = 0$$
+
+since deviations from a group mean always sum to zero. Hence the cross-product term equals zero for every $i$.
+
+**Simplifying the treatment term.** Since $(\bar{y}_{i.} - \bar{y}_{..})$ is constant in $j$:
+$$\sum_{j=1}^{n_i}(\bar{y}_{i.} - \bar{y}_{..})^2 = n_i(\bar{y}_{i.} - \bar{y}_{..})^2$$
+
+Combining, we obtain:
+$$\underbrace{\sum_{i=1}^{3}\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{..})^2}_{SS_{\text{Total}}} = \underbrace{\sum_{i=1}^{3}\sum_{j=1}^{n_i}(y_{ij} - \bar{y}_{i.})^2}_{SS_{\text{Error}}} + \underbrace{\sum_{i=1}^{3} n_i(\bar{y}_{i.} - \bar{y}_{..})^2}_{SS_{\text{Treatments}}} \qquad \blacksquare$$
+
+
+
+
+
+
+\newpage
+:::{.callout-important}
+## Question 8 **(3+4=7 Points)** 
+
+For the fixed model with one factor of a levels prove that the expected values of these quantities are: $$E\left[MS_{\mbox{\tiny\textit{Error}}}\right] = \sigma^2\ \ \ \ \ \ \ \ \ \ \ \text{and} \ \ \ E\left[MS_{\mbox{\tiny\textit{Treatments}}}\right] = \sigma^2 + \frac{n\sum_{i=1}^{a}{\tau_i^2}}{a-1}$$
+
+::::
+`r bfcolor("ANSWERS TO QUESTION 8:", "red")` \
+
+The fixed-effects one-factor model is:
+$$y_{ij} = \mu + \tau_i + \epsilon_{ij}, \quad \epsilon_{ij} \overset{iid}{\sim} \mathcal{N}(0, \sigma^2), \quad i = 1,\ldots,a, \quad j = 1,\ldots,n$$
+with the constraint $\sum_{i=1}^{a} \tau_i = 0$.
+
+**(a) Show $E[MS_{\text{Error}}] = \sigma^2$**
+
+The error sum of squares is:
+$$SS_{\text{Error}} = \sum_{i=1}^{a}\sum_{j=1}^{n}(y_{ij} - \bar{y}_{i.})^2$$
+
+Since $y_{ij} - \bar{y}_{i.} = \epsilon_{ij} - \bar{\epsilon}_{i.}$, we have:
+$$SS_{\text{Error}} = \sum_{i=1}^{a}\sum_{j=1}^{n}(\epsilon_{ij} - \bar{\epsilon}_{i.})^2$$
+
+For each group $i$, $\sum_{j=1}^{n}(\epsilon_{ij} - \bar{\epsilon}_{i.})^2$ is the sum of squared deviations of $n$ iid $\mathcal{N}(0,\sigma^2)$ variables from their mean, so:
+$$E\left[\sum_{j=1}^{n}(\epsilon_{ij} - \bar{\epsilon}_{i.})^2\right] = (n-1)\sigma^2$$
+
+Summing over $i = 1, \ldots, a$:
+$$E[SS_{\text{Error}}] = a(n-1)\sigma^2$$
+
+Therefore:
+$$E[MS_{\text{Error}}] = \frac{E[SS_{\text{Error}}]}{a(n-1)} = \sigma^2 \qquad \blacksquare$$
+
+**(b) Show $E[MS_{\text{Treatments}}] = \sigma^2 + \dfrac{n\displaystyle\sum_{i=1}^{a}\tau_i^2}{a-1}$**
+
+The treatment sum of squares is:
+$$SS_{\text{Treatments}} = n\sum_{i=1}^{a}(\bar{y}_{i.} - \bar{y}_{..})^2$$
+
+Using the model, the group and grand means are:
+$$\bar{y}_{i.} = \mu + \tau_i + \bar{\epsilon}_{i.}, \qquad \bar{y}_{..} = \mu + \bar{\epsilon}_{..}$$
+
+where the constraint $\sum_i \tau_i = 0$ ensures $\tau$ drops from $\bar{y}_{..}$. Thus:
+$$\bar{y}_{i.} - \bar{y}_{..} = \tau_i + (\bar{\epsilon}_{i.} - \bar{\epsilon}_{..})$$
+
+Squaring and taking expectations, and using the fact that $\tau_i$ is a fixed constant while $E[\bar{\epsilon}_{i.} - \bar{\epsilon}_{..}] = 0$:
+$$E\left[(\bar{y}_{i.} - \bar{y}_{..})^2\right] = \tau_i^2 + E\left[(\bar{\epsilon}_{i.} - \bar{\epsilon}_{..})^2\right]$$
+
+We compute the variance term. Since $\bar{\epsilon}_{i.} \sim \mathcal{N}(0, \sigma^2/n)$ and $\bar{\epsilon}_{..} \sim \mathcal{N}(0, \sigma^2/(an))$, and $\text{Cov}(\bar{\epsilon}_{i.}, \bar{\epsilon}_{..}) = \sigma^2/(an)$:
+$$E\left[(\bar{\epsilon}_{i.} - \bar{\epsilon}_{..})^2\right] = \text{Var}(\bar{\epsilon}_{i.}) - 2\,\text{Cov}(\bar{\epsilon}_{i.},\bar{\epsilon}_{..}) + \text{Var}(\bar{\epsilon}_{..}) = \frac{\sigma^2}{n} - \frac{2\sigma^2}{an} + \frac{\sigma^2}{an} = \frac{(a-1)\sigma^2}{an}$$
+
+Summing over $i = 1, \ldots, a$:
+$$E[SS_{\text{Treatments}}] = n\sum_{i=1}^{a}\left[\tau_i^2 + \frac{(a-1)\sigma^2}{an}\right] = n\sum_{i=1}^{a}\tau_i^2 + (a-1)\sigma^2$$
+
+Therefore:
+$$E[MS_{\text{Treatments}}] = \frac{E[SS_{\text{Treatments}}]}{a-1} = \sigma^2 + \frac{n\displaystyle\sum_{i=1}^{a}\tau_i^2}{a-1} \qquad \blacksquare$$
