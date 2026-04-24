@@ -85,7 +85,13 @@ c) Complete the first three steps of the guidelines for designing experiments in
 
 `r bfcolor("ANSWERS TO QUESTION 1:", "red")` \
 
-_**Replace this line with your answers**_ \
+a) The response variable in this experiment would be student performance. You would measure he response based on what grade they receive in the course.
+
+b) Some potential sources of variability are how long a student spent studying, how motivated they were during the course, and how good their internet was
+
+c) 1. Randomly assign students to different versions of the course
+   2. Apply each treatment to multiple student instead of one
+   3. Group students based on year and major
   
   
 \newpage
@@ -200,13 +206,18 @@ Show all your calculations.
 
 `r bfcolor("ANSWERS TO QUESTION 4:", "red")` \
 
-_**Replace this line with your answers**_ \
+
+a) Mean: $E[Y] = E[aX+b] = aE[X] + b = aA +b$
+  Standard Deviation: $SD(Y) = \sqrt{Var(aX+b)} = \sqrt{a^2Var(X)} = |a|B$
+  
+b) $15a +b = 5$ and $|a|4 = 8$
+a = 2 or -2
+
+if a = 2: 15(2) + b = 5 $\implies$ b = -25
+if a = -2: 15(-2) + b = 5 $\implies$ b = 35
 
 
-
-
-
-
+A negative a reverses the order of the data but still scales the spread by the absolute value
 
 \newpage
 :::{.callout-important}
@@ -235,12 +246,18 @@ e) What is a practical reason for the conclusion you reached in part (d)?
 ::: 
 `r bfcolor("ANSWERS TO QUESTION 5:", "red")` \
 
-_**Replace this line with your answers**_ \
+
+a) $$H_0 : \mu_E = \mu_B \\
+    H_A: \mu_E > \mu_B$$
 
 
+b) Reject $H_0$ if $Z > 1.645$
 
+c) $$Z = \frac{18.5-15.2}{\sqrt{\frac{5.4^2}{100} + \frac{4.8^2}{90}}} = \frac{3.3}{0.74} \approx 4.46$$
 
+d) Since 4.46 > 1.645, we reject the null hypothesis since there is highly significant evidence that Engineering majors study more
 
+e) A reason for the conclusion that Engineering majors study more is that Engineering is often viewed as more difficult than business
 \newpage
 
 :::{.callout-important}
@@ -261,5 +278,12 @@ Do the data indicate a significant difference in the 2003 proportions of student
 
 `r bfcolor("ANSWERS TO QUESTION 6:", "red")` \
 
-_**Replace this line with your answers**_ \
+```{r}
+res <- prop.test(x = c(0.40*6124, 0.37*5512),
+                 n = c(6124, 5512),
+                 conf.level = 0.99)
+res
+```
+$Z = \frac{0.40 - 0.37}{\sqrt{0.3858(1 - 0.3858) \left( \frac{1}{6124} + \frac{1}{5512} \right)}} = \frac{0.03}{0.009} \approx 3.33$
 
+For $alpha = 0.01$, the critical value is $Z = 2.578$. Since 3.33 > 2.576, we reject the null hypothesis. There is a significant difference in fluency proportions between the two districts
