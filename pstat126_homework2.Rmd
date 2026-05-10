@@ -1,0 +1,89 @@
+---
+title: "pstat126_homework2"
+author: "Melody Su"
+date: "2026-05-10"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## CODING
+
+1.  Using the same dataset as stated in Homework 1, create a null model and a simple linear regression model. Plot the regression line through the points. Explain all the elements of the output obtained after calling the summary function
+
+    ```{r}
+    data <- read.csv("Dataset.csv")
+    null_model <- lm(Energy_Consumption_kWh ~ 1, data)
+    simple_model <- lm(Energy_Consumption_kWh ~ Temperature_C, data)
+
+    plot(data$Temperature_C, data$Energy_Consumption_kWh,
+          main = "Scatterplot for Temperature and Energy Consumption",
+          xlab = "Temperature (Celcius)",
+          ylab = "Energy Consumption (kWh)",
+          pch = 19,
+          col = "pink")
+
+    abline(simple_model,
+          col = "hotpink",
+          lwd = 2)
+    ```
+
+    ```{r}
+    summary(null_model)
+    ```
+
+    **Residuals**: the residuals represent how far each energy consumption value is from the overall average.
+
+    **Coefficients**:
+
+    - [Estimate]{.underline}: the model predicts every observation to have approximately this average energy consumption of 102.86
+
+    - [Standard Error]{.underline}: the estimated mean energy consumption typically varies by about 2.59 kWh from sample to sample
+
+    - [t-value]{.underline}: the estimated intercept is 39.71 standard errors away from 0
+
+    - [p-value]{.underline}: the p-value is extremely small so we reject the null hypothesis and the mean energy consumption is significantly different from 0.
+
+    **Residual Standard Error**: predictions from the null model are typically off by about 18.31 kWh
+
+    ```{r}
+    summary(simple_model)
+    ```
+
+    **Coefficients**:
+
+    - [Estimates]{.underline}: when temperature is 0 degrees, the predicted energy consumption is 50.93 kWh. for every 1 degree increase in temperature, predicted energy consumption increases by approximately 2.46 kWh.
+
+    - [Standard Error]{.underline}: the estimated intercept typically varies by about 2.04 across repeated samples. the estimated slope typically varies by about 0.09 across repeated samples.
+
+    - [t value]{.underline}: the intercept estimate is 24.91 standard errors away from 0. the slope estimate is about 26.81 standard errors away from 0
+
+    - [p-value]{.underline}: the probability of obtaining such a large t-statistic if the true slope were zero is essentially zero. we reject the null hypothesis and conclude that temperature is a statistically significant predictor.
+
+    **Residual Standard Error**: the model's predictions are typically off by about 4.63 kWh.
+
+    **Multiple R-squared**: 93.7% of the variation in energy consumption is explained by temperature
+
+2.  Find the 95% confidence interval for all estimates and the 95% prediction interval.
+
+```{r}
+confint(simple_model, level = 0.95)
+
+conf_int <- predict(simple_model, interval = "confidence", level = 0.95)
+conf_int
+
+pred_int <- predict(simple_model, interval = "prediction", level = 0.95)
+pred_int
+
+# Combine fitted values and intervals with original data
+results <- cbind(data, conf_int, pred_int)
+head(results)
+```
+
+3.  Based on various measures such as residual standard error, coefficient of determination, and F-value, comment on which model you would prefer.
+
+    I would prefer the simple linear regression model over the null model. Its residual standard error is much smaller (about 4.63 compared to 18.31), meaning the predictions are closer to the observed values. The model also has a very high R\^2 value of about 0.937, which means temperature explains approximately 93.7% of the variation in energy consumption. In addition, the large F-value and extremely small p-value indicate that the regression model is statistically significant overall.
+
+4.  Finally, interpret all the possible measures in the output, including the estimates, their standard errors, t-value, p-value, residual standard error, R\^2, F value.
+
+    Standard errors, t-values, p-values, residual standard errors, and R\^2 are explained in **part 2**. The F-value is about 718.8 with a very small p-value, meaning the regression model is statistically significant overall and temperature is a useful predictor.
