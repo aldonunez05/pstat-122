@@ -1,0 +1,355 @@
+---
+title: 'Week 6 (LAB3): Block Design'
+subtitle: "PSTAT122: Design and Analysis of Experiments" 
+
+author:
+  - name: "Aldo Nunez"
+    affiliations:
+      - name: "Spring 2026"
+affiliation-title: "Quarter"
+format: 
+ pdf:
+    code-fold: true
+    code-line-numbers: true
+    code-copy: true
+    code-tools: true
+    self-contained: true
+    toc: false
+    toc-location: left
+    number-sections: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message =  FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+knitr::opts_chunk$set(error =  FALSE)
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+
+:::{.callout-tip}
+# Submission Instructions
+
+
+* This LAB must be completed and submitted **individually**. Collaboration is allowed for discussion, but each student must submit their own work.
+
+* Ensure that all `R` code are presented clearly and appropriately.
+
+* All figures should be numbered, and axes must be labeled. 
+
+* Please use the provided `LAB 3.qmd` file to type your solutions and submit the completed LAB as a PDF file. 
+
+You can utilize `RStudio` for this purpose. For guidance, refer to the [Tutorial: Hello, Quarto](https://quarto.org/docs/get-started/hello/rstudio.html)).
+
+* * Submit your solution via **Gradescope** as **a single PDF file**.
+
+:::
+
+:::{.callout-caution}
+# Due Date
+**Due Date:** Sunday, May 10, 2026, 11:59 PM
+:::
+ 
+:::{.callout-important}
+# Overview
+In this lab, we explore blocking in experimental design using both a Randomized Complete Block Design (RCBD) and a Balanced Incomplete Block Design (BIBD). You will learn how blocking reduces experimental error and increases the precision of treatment comparisons, and how incomplete blocks can be handled when not all treatments can appear in every block.
+:::
+
+# Objectives:
+
+1- Explain the purpose of blocking in experimental design.
+
+2- Describe the structure and parameters of a Balanced Incomplete Block Design (BIBD).
+
+3- Construct and visualize RCBD and BIBD in `R`.
+
+4- Fit and interpret ANOVA models for both RCBD and BIBD, including blocks.
+
+5- Check ANOVA assumptions using residual plots and normality tests.
+
+6- Interpret treatment effects using pairwise comparisons and Tukey HSD when appropriate.
+
+
+# Introduction: Why Blocking?
+
+In many experiments, external sources of variation — such as testers, locations, or days — can influence the results.
+
+To reduce the impact of these unwanted differences, we group similar experimental units together into blocks.
+
+However, sometimes each block cannot test all treatments due to limitations (e.g., time, fatigue, or cost).
+In such cases, we use a Balanced Incomplete Block Design (BIBD) — where:
+
+Not all treatments appear in every block.
+
+The design is balanced: every pair of treatments appears together in the same number of blocks.
+
+# Insulation Cut and Strength
+:::{.callout-note}
+# Insulation Cut and Strength   (15 Points)
+The data in `insulate1.txt` is from an experiment that measured impact strength of insulation with the purpose of determining if there is a difference between pieces that are cut crosswise or lengthwise from the material stock lots. The file contains the strength measured in foot-pounds, the type of cut (either cross or lengthwise), and the lot number from which the sample was cut.
+::::
+
+
+Let's start by reading the data 
+
+```{r}
+insulate <- read.table("insulate1.txt", header = TRUE)
+insulate$Cut  <- as.factor(insulate$Cut)
+insulate$Lot <- as.factor(insulate$Lot)
+head(insulate)
+```
+
+
+```{r}
+freq_table <- table(insulate$Cut, insulate$Lot )
+freq_table
+```
+The three key variables are:
+
+**strength**: The response variable (dependent variable) measured in foot-pounds. This is the output (yield) we are trying to analyze and explain.
+
+**cut_type**: The treatment factor (independent variable) of primary interest, with two levels: "cross" and "length".
+
+**lot_number**: The blocking factor, a nuisance variable intended to control for variations between different stock lots
+the yield is strength of insulation
+
+## RCBD Example: Insulation Strength
+
+| Factor | Levels | Role      | Notes        |
+|--------|--------|-----------|-------------|
+| Cut    | 2      | Treatment | Type of cut |
+| Lot    | 10     | Block     | Stock lots  |
+
+
+:::{.callout-important}
+# Question
+a) Draw a boxplot and perform a one-way ANOVA to determine whether or not the type of cut effects the impact strength. What would we conclude from this simple model?
+:::
+
+```{r}
+library(ggplot2)
+ggplot(insulate, aes(x = Cut, y = Strength, fill = Cut)) + 
+  geom_boxplot() + 
+  labs(title = "Figure 1: Insulation Strength by Cut Type",
+       x = "Cut Type", y = "Strength (ft-lbs)") +
+  theme_minimal()
+```
+
+
+
+
+The boxplot shows a difference between the type of cut. The analysis of variance is conducted below:
+
+```{r}
+model_a <- aov(Strength ~ Cut, data = insulate)
+summary(model_a)
+```
+
+:::{.callout-important}
+# Question
+b) Draw a boxplot of the strengths by lot number this time. Do you think it will make a difference if we use this additional factor in the analysis?
+:::
+
+```{r}
+ggplot(insulate, aes(x = Lot, y = Strength, fill = Lot)) + 
+  geom_boxplot() + 
+  labs(title = "Figure 2: Insulation Strength by Lot Number",
+       x = "Lot Number", y = "Strength (ft-lbs)") + 
+  theme_minimal() + 
+  theme(legend.position = "none")
+```
+
+
+
+
+
+:::{.callout-important}
+# Question
+c) Perform an ANVOA testing the same question as in part (a) but using the lot number as a blocking variable. How does this affect our conclusion?
+:::
+
+```{r}
+model_c <- aov(Strength ~ Cut + Lot, data = insulate)
+summary(model_c)
+```
+
+
+:::{.callout-important}
+# Question
+d) check the validity of the model.
+:::
+
+```{r}
+par(mfrow = c(2,2))
+plot(model_c, main = "")
+
+shapiro.test(residuals(model_c))
+```
+
+# Coffee Taste Study (15 Points)
+Imagine you are a sensory analyst testing 6 new coffee blends (A–F).
+
+You have 10 tasters available, but each can only taste 3 blends (to avoid fatigue).
+
+You need a fair design where each blend:
+
+Appears the same number of times across tasters, and
+
+Each pair of blends appears together in the same number of tasters.
+
+This is a perfect setup for a **Balanced Incomplete Block Design.**
+
+## Generate the BIBD Design
+```{r}
+library("agricolae")
+
+set.seed(100)
+treatments <- paste0("Blend", LETTERS[1:6])
+
+# Then pass the variable (not the expression) to design.bib()
+design <- design.bib(trt = treatments, k = 3, r = 5, seed = 123)
+head(design$book)
+```
+
+Let's explore the used parameters: 
+
+$v$ = 6 : 6 blends (treatments)
+
+$b$ = 10 : 10 tasters (blocks)
+
+$r$ = 5 : each blend appears in 5 blocks
+
+$k$ = 3 : each block contains 3 blends
+
+$\lambda$ = 2 : each pair of blends appears together in 2 blocks
+
+
+:::{.callout-important}
+# Question
+a) Why do we call this an incomplete design?
+(Hint: does every taster try all blends?)
+:::
+
+We call this an incomplete block design because not every taster tries every blend. With 6 blends and each taster only evaluating 3, each block contains only k = 3 out of v = 6 treatments. A complete block design would require each taster to rate all 6 blends, which is impractical here due to taster fatigue.
+
+
+## Simulate Taste Scores
+
+We’ll now simulate the actual tasting results. Each taster (block) gives a score (1–10) for each coffee blend they try.
+
+We’ll assume Blend A is slightly preferred on average, but there’s natural variability among tasters.
+
+```{r}
+library(dplyr)
+set.seed(100)
+data <- design$book %>% rename(trt = treatments) %>%
+  mutate(Score = round(7 +
+  ifelse(trt == "BlendA", 1, 0.5) +  # Blend A slightly better
+      rnorm(n(), 0, 1), 1))
+
+head(data)
+```
+
+## Explore the Data
+
+Let’s take a look at the overall structure.
+
+```{r}
+str(data)
+summary(data$Score)
+
+```
+
+*Variables*:
+
+`plots` – unique identifier for each observation.
+
+`block` – taster (10 total).
+
+`trt` – coffee blend label (BlendA–BlendF).
+
+`Score` – numeric taste rating.
+
+## Visulization
+
+```{r}
+library(ggplot2)
+ggplot(data, aes(x = trt, y = Score, fill = trt)) +
+geom_boxplot() +
+labs(title = "Coffee Blend Taste Scores",
+x = "Coffee Blend",
+y = "Taste Score") +
+theme_minimal()
+```
+
+:::{.callout-important}
+# Question
+b) What does this boxplot suggest about differences between blends?
+Can you already spot one that looks better on average?
+:::
+
+The boxplot suggests that blendA tastes the best since it has the highest meidan score. Blends B-F are clustered closely together so that suggests that those blends don't differ in taste by much.
+
+
+
+### BIBD Example: Coffee Taste Study 
+
+| Factor  | Levels | Role      | Notes         |
+|---------|--------|-----------|---------------|
+| Blend   | 6      | Treatment | Coffee blend  |
+| Taster  | 10     | Block     | Sensory panel |
+
+
+## Fit the BIBD Model
+
+Now we analyze the data, including both treatment and block effects:
+
+```{r}
+
+model <- aov(Score ~ trt + block, data = data)
+summary(model)
+
+```
+
+
+:::{.callout-important}
+# Question
+c) Is the treatment effect significant?
+
+Why might including block in the model reduce experimental error?
+:::
+
+```{r}
+model <- aov(Score ~ trt + block, data = data)
+summary(model)
+```
+
+
+
+
+**Try** to fit the ANOVA with only treatment!!
+```{r}
+model_trt_only <- aov(Score ~ trt, data = data)
+summary(model_trt_only)
+```
+
+## Compare Treatments
+
+If the treatment effect is significant, we can perform pairwise comparisons
+
+:::{.callout-important}
+# Question
+d) Compare the estimated mean scores (adjusted for blocks) with confidence intervals by using appropriate plot.
+:::
+
+```{r}
+tuk <- TukeyHSD(model, which = "trt")
+plot(tuk, las = 1)
+```
+
+
