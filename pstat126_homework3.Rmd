@@ -1,0 +1,196 @@
+---
+title: "pstat126_homework3"
+author: "Melody Su"
+date: "2026-05-28"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+data <- read.csv("Dataset for Homework 3-1.csv")
+data$Exam_Level <- as.factor(data$Exam_Level)
+data$Exam_Anxiety <- as.factor(data$Exam_Anxiety)
+
+full_model <- lm(
+  Exam_Score ~ Hours_Studied +
+    Phone_Usage +
+    Assignments_Completed +
+    Exam_Level +
+    Exam_Anxiety,
+  data = data
+)
+
+summary(full_model)
+```
+
+## 1. Variable Selection
+
+Use the AIC/BIC method to select the most appropriate predictors for the model
+
+```{r}
+# AIC
+aic_model <- step(full_model, direction = "backward")
+summary(aic_model)
+AIC(aic_model)
+```
+
+```{r}
+# BIC
+n <- nrow(data)
+bic_model <- step(
+  full_model,
+  direction = "backward",
+  k = log(n)
+)
+summary(bic_model)
+```
+
+The best model according to both AIC and BIC was:
+
+$$\text{Exam Score ~ Hours Studied + Assignments Completed + Exam Level}$$
+
+The variables **Phone Usage** and **Exam Anxiety** were removed because they did not improve the model sufficiently.
+
+```{r}
+final_model <- lm(
+  Exam_Score ~ Hours_Studied +
+    Assignments_Completed +
+    Exam_Level,
+  data = data
+)
+AIC(final_model)
+BIC(final_model)
+```
+
+\
+Best model statistics:
+
+- AIC = 753.3955
+
+- BIC = 769.0266
+
+## 2. Multicollinearity Check
+
+Apply the Variance Inflation Factor (VIF) technique to detect and remove multicollinearity among the predictors.
+
+```{r}
+library(car)
+vif(aic_model)
+```
+
+The VIF values for **Hours Studied**, **Assignments Completed**, and **Exam Level** are all below 5, indicating that multicollinearity is not a concern. Therefore, no variables need to be removed based on the VIF analysis.
+
+## 3. Final Model Specification
+
+Write down the final reduced model obtained after applying these techniques.
+
+$$\widehat{\text{Exam Score}} = \text{-7.4503 + 13.1683(Easy) + 10.4826(Medium) + 4.2816(Hours Studied) + 7.3101(Assignments Completed)}$$
+
+## 4. Interpretation of Estimates
+
+Provide a statistical interpretation of the coefficients output (estimates, standard error, t-value) in the final model.
+
+#### [**Hours Studied**:]{.underline} 
+
+For every additional hour studied, the expected exam score increases by about 4.28 points, holding all other variables constant
+
+The standard error is small (0.361), meaning the estimate is precise
+
+The large t-value (11.845) and very small p-va;ue indicate that **Hours Studied** is highly significant.
+
+#### [Assignments Completed:]{.underline}
+
+For every additional assignment completed, the expect exam score increases by about 7.31 points, holding other variables constant.
+
+The large t-value (10.169) shows strong statistical significance.
+
+#### [Exam Level:]{.underline}
+
+Compared to a difficult exam:
+
+- students taking an easy exam score about 13.17 points higher on average
+
+- students taking a medium exam score about 10.48 points higher on average
+
+Both coefficients are statistically significant
+
+#### [Intercept:]{.underline}
+
+The intercept represents the predicted exam score when all predictors equal zero and the exam is difficult.
+
+Although the intercept is statistically significant, it may not have a strong practical interpretation because some predictor values may not realistically equal zero.
+
+## 5. Hypothesis Testing
+
+### (a) Partial Significance Tests
+
+Explain the significance of individual coefficients based on their p-values. (This test assesses the significance of individual predictors in the model by checking whether each coefficient is significantly different from zero).
+
+For each predictor:
+
+$$H_0: \beta_j = 0\\
+H_A : \beta_j \neq 0$$
+
+Hours Studied: significant
+
+Assignments Completed: significant
+
+Exam Level (Easy): significant
+
+Exam Level (Medium): significant
+
+Since all p-values are below 0.05, all predictors in the final model are statistically significant.
+
+### (b) Global Significance Test
+
+Interpret the F-statistic to assess the overall significance of the model, (This test evaluates whether at least one predictor in the model is significant).
+
+$$F = 69.57$$
+
+with p-value:
+
+$$2.14 \times 10^{-27}$$
+
+Hypothesis:
+
+$$H_0: \beta_1 = \beta_2 = \cdots = \beta_p = 0\\
+H_A : \text{At least one } \beta_j \neq 0$$
+
+Since the p-value is extremely small, we reject the null hypothesis.
+
+Conclusion: The regression model is globally significant, meaning at least one predictor is useful for explaining exam scores.
+
+## 6. Model Performance
+
+### (a) interpret $R^2$ and Adjusted $R^2$ to assess model fit
+
+Model statistics:
+
+- $R^2 = 0.746$
+
+- Adjusted $R^2 = 0.735$
+
+Interpretation:
+
+- The model explains approximately 74.6% of the variability in exam scores.
+
+- The adjusted $R^2$ is slightly smaller because it accounts for the number of predictors used.
+
+- Since both values are relatively high, the model provides a good fit to the data.
+
+### (b) Residual Standard Error (RSE)
+
+The Residual Standard Error is:
+
+$RSE \approx 7.37$
+
+Interpretation:
+
+- The RSE measures the typical prediction error of the model.
+
+- On average, the predicted exam scores differ from the actual scores by about 7.37 points.
+
+- A smaller RSE indicates better prediction accuracy.
+
+Overall, the model performs well and explains a substantial portion of the variation in exam scores.
