@@ -8,6 +8,10 @@ output:
 ---
 
 ```{r}
+install.packages("car", dependencies = TRUE)
+```
+
+```{r}
 data <- read.csv("Dataset for Homework 3-1.csv")
 data$Exam_Level <- as.factor(data$Exam_Level)
 data$Exam_Anxiety <- as.factor(data$Exam_Anxiety)
